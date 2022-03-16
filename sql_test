@@ -1,0 +1,55 @@
+-- 1. Выберите первых 10 значений из таблицы А
+
+SELECT *
+FROM Table_A
+LIMIT 10 ;
+
+-- 2 Посчитайте накопительную сумму
+-- 2.1 by user
+SUM(Amount_in_usd) OVER(PARTITION BY User_id ORDER BY Amount_in_usd, order_id) as cumulative_sum_by_user
+-- 2.2 by user and Package
+SUM(Amount_in_usd) OVER(PARTITION BY User_id,package ORDER BY Amount_in_usd, order_id) as cumulative_sum_by_user
+-- 2.3 by package and subs_type
+SUM(Amount_in_usd) OVER(PARTITION BY package,subs_id ORDER BY Amount_in_usd, order_id) as cumulative_sum_by_package_subs_type
+
+-- 3.1 Количество установок по дням в стране “US”
+SELECT
+  DAY(i.registration_time) AS day,  -- dayofweek/ dayofmonth/dayofyear
+  COUNT(DISTINCT i.user_id) AS count_installs -- count installs = count users
+FROM installs i
+WHERE i.country = "US"
+GROUP BY day
+
+--3.2 Количество сессий пользователей, которые зарегистрировались после 1ого января 2022
+SELECT
+  i.user_id,
+  COUNT(s.user_id) -- count sessions ( not distinct )
+FROM sessions s
+INNER JOIN installs i
+  ON i.user_id = s.user_id
+WHERE i.registratiion_time > '2022-01-01'
+GROUP BY i.user_id
+
+--3.3 Количество пользователей из страны “CA”, заплативших больше 50$
+SELECT
+  COUNT(DISTINCT p.user_id) AS count_users_CA
+FROM payments p
+INNER JOIN installs i
+  ON i.user_id = p.user_id
+WHERE i.country = 'CA'
+AND p.amount_in_usd >= 50
+
+--4 Каким будем результат full join таблицы А и В по всем полям
+Таблица А 10 строк 
+User_id 
+Country
+ Таблица В 10 строк 
+User_id 
+Country
+
+
+ответ
+full join  возвращает все строки с двух таблиц 
+- если это две одинаковые таблицы, будет 10 строк ( all a.user_id = b.user_id)
+- если это две разные таблицы,  будет 20 строк (all a.user_id != b.user_id) , где не бует соответсыующих совпадений по ключу будут NULL
+- или от 10 до 20 строк ,если часть данных будет совпадать 
